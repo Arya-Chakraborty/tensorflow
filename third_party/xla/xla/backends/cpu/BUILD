@@ -2,6 +2,7 @@ load("//xla/backends/cpu:package_groups.bzl", "xla_cpu_backend_access")
 load("//xla/tsl:tsl.bzl", "internal_visibility")
 load("//xla/tsl:tsl.default.bzl", "filegroup", "get_compatible_with_portable")
 load("//xla/tsl/mkl:graph.bzl", "onednn_graph_cc_library")
+load("//xla/tsl/platform:build_config.bzl", "tf_proto_library")
 load("//xla/tsl/platform:rules_cc.bzl", "cc_library")
 
 package(
@@ -56,12 +57,22 @@ onednn_graph_cc_library(
 
 onednn_graph_cc_library(
     name = "onednn_fusion",
+    srcs = ["onednn_fusion.cc"],
     hdrs = ["onednn_fusion.h"],
     compatible_with = get_compatible_with_portable(),
     deps = [
+        "//xla:shape_util",
+        "//xla:xla_data_proto_cc",
+        "//xla/backends/cpu/runtime:dot_lib",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
         "@onednn//:mkl_dnn",
     ],
+)
+
+tf_proto_library(
+    name = "xnnpack_config_proto",
+    srcs = ["xnnpack_config.proto"],
 )
 
 cc_library(
@@ -70,6 +81,7 @@ cc_library(
     hdrs = ["xnn_emitter.h"],
     deps = [
         ":xnn_fusion",
+        "//xla:literal",
         "//xla:shape_util",
         "//xla:util",
         "//xla:xla_data_proto_cc",
@@ -91,12 +103,38 @@ cc_library(
     hdrs = ["xnn_fusion.h"],
     deps = [
         "//xla:shape_util",
+        "//xla:util",
         "//xla:xla_data_proto_cc",
+        "//xla/backends/cpu/codegen:target_machine_features",
         "//xla/backends/cpu/runtime:dot_lib",
         "//xla/hlo/ir:hlo",
         "//xla/tsl/platform:statusor",
+        "@XNNPACK",
         "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "constant_allocation",
+    srcs = ["constant_allocation.cc"],
+    hdrs = ["constant_allocation.h"],
+    deps = [
+        "//xla:literal",
+        "//xla:shape_util",
+        "//xla:util",
+        "//xla:xla_data_proto_cc",
+        "//xla/hlo/ir:hlo",
+        "//xla/service:buffer_assignment",
+        "//xla/stream_executor:device_memory",
+        "//xla/tsl/platform:statusor",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )

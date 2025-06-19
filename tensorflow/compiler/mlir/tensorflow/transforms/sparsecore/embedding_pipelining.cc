@@ -148,6 +148,7 @@ return selected_results
 #include "mlir/Pass/Pass.h"  // from @llvm-project
 #include "mlir/Support/LLVM.h"  // from @llvm-project
 #include "mlir/Support/LogicalResult.h"  // from @llvm-project
+#include "mlir/Transforms/Inliner.h"  // from @llvm-project
 #include "mlir/Transforms/InliningUtils.h"  // from @llvm-project
 #include "mlir/Transforms/RegionUtils.h"  // from @llvm-project
 #include "tensorflow/compiler/jit/flags.h"
@@ -204,15 +205,19 @@ bool UseEmbeddingPipelining(ModuleOp& module) {
     LOG(INFO) << "Embedding pipelining disabled via flag.";
     return false;
   }
-  // Detect summaries by looking for key Ops in the graph. It would be better to
-  // do this via operator attributes rather than looking for a specific op.
-  WalkResult walk_result = module.walk([&](Operation* op) -> WalkResult {
-    if (llvm::isa<TF::WriteSummaryOp>(op)) return WalkResult::interrupt();
-    return WalkResult::advance();
-  });
-  if (walk_result.wasInterrupted()) {
-    LOG(INFO) << "TF summaries detected - disabling embedding pipelining.";
-    return false;
+
+  if (tensorflow::GetBuildXlaOpsPassFlags()
+          ->tf_xla_disable_full_embedding_pipelining_with_summaries) {
+    // Detect summaries by looking for key Ops in the graph. It would be better
+    // to do this via operator attributes rather than looking for a specific op.
+    WalkResult walk_result =
+        module.walk([&](TF::WriteSummaryOp op) -> WalkResult {
+          return WalkResult::interrupt();
+        });
+    if (walk_result.wasInterrupted()) {
+      LOG(WARNING) << "TF summaries detected - disabling embedding pipelining.";
+      return false;
+    }
   }
   LOG(INFO) << "Embedding pipelining rewrite enabled.";
   return true;
@@ -418,6 +423,7 @@ struct Inliner : public InlinerInterface {
   LogicalResult InlineCallsInFunc(func::FuncOp func,
                                   bool inline_all_funcs = false) {
     llvm::SetVector<Operation*> ops_to_erase;
+    InlinerConfig config;
     for (auto caller :
          func.getRegion().getOps<TF::StatefulPartitionedCallOp>()) {
       if (!inline_all_funcs &&
@@ -437,7 +443,8 @@ struct Inliner : public InlinerInterface {
       auto callee =
           llvm::dyn_cast<func::FuncOp>(symbol_table.lookup(caller.getF()));
       auto& src_region = callee.getRegion();
-      auto result = inlineCall(*this, caller, callee, &src_region, true);
+      auto result = inlineCall(*this, config.getCloneCallback(), caller, callee,
+                               &src_region, true);
       if (failed(result)) {
         func.emitError("Inliner failed");
         return result;

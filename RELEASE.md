@@ -9,6 +9,9 @@
 * <DOCUMENT BREAKING CHANGES HERE>
 * <THIS SECTION SHOULD CONTAIN API, ABI AND BEHAVIORAL BREAKING CHANGES>
 
+* The `tensorflow-io-gcs-filesystem` package is now optional, due its uncertain, and limited support.
+  To install it alongside `tensorflow`, run `pip install "tensorflow[gcs-filesystem]"`.
+
 ### Known Caveats
 
 * <CAVEATS REGARDING THE RELEASE (BUT NOT BREAKING CHANGES).>
@@ -42,8 +45,9 @@
 
 ### Major Features and Improvements
 
-*   <INSERT MAJOR FEATURE HERE, USING MARKDOWN SYNTAX>
-*   <IF RELEASE CONTAINS MULTIPLE FEATURES FROM SAME AREA, GROUP THEM TOGETHER>
+* `tf.data`
+    * Adds `autotune.min_parallelism` to `tf.data.Options` to enable faster
+      input pipeline warm up.
 
 ### Bug Fixes and Other Changes
 
@@ -64,15 +68,19 @@ This release contains contributions from many people at Google, as well as:
 ### Breaking Changes
 
 * `LiteRT`, a.k.a. `tf.lite`:
-  * C++ API:
-    * The public constants `tflite::Interpreter:kTensorsReservedCapacity`
-      and `tflite::Interpreter:kTensorsCapacityHeadroom` are now const
-      references, rather than `constexpr` compile-time constants.
-      (This is to enable better API compatibility for TFLite in Play services
-      while preserving the implementation flexibility to change the values of
-      these constants in the future.)
-    * Interpreter:
-      * `tf.lite.Interpreter` gives deprecation warning redirecting to its new location at `ai_edge_litert.interpreter`, as the API `tf.lite.Interpreter` will be deleted in TF 2.20. See the [migration guide](https://ai.google.dev/edge/litert/migration) for details.
+    * C++ API:
+      * The public constants `tflite::Interpreter:kTensorsReservedCapacity`
+        and `tflite::Interpreter:kTensorsCapacityHeadroom` are now const
+        references, rather than `constexpr` compile-time constants.
+        (This is to enable better API compatibility for TFLite in Play services
+        while preserving the implementation flexibility to change the values of
+        these constants in the future.)
+    * Python API:
+      * `tf.lite.Interpreter` gives deprecation warning redirecting to its new
+        location at `ai_edge_litert.interpreter`, as the API
+        `tf.lite.Interpreter` will be deleted in TF 2.20. See the
+        [migration guide](https://ai.google.dev/edge/litert/migration) for
+        details.
 
 ### Known Caveats
 
@@ -3226,7 +3234,7 @@ This release introduces several vulnerability fixes:
 
     *   Keras been split into a separate PIP package (`keras`), and its code has
         been moved to the GitHub
-        repository[keras-team/keras](http://github.com/keras-team/keras). The
+        repository[keras-team/keras](https://github.com/keras-team/keras). The
         API endpoints for `tf.keras` stay unchanged, but are now backed by the
         `keras` PIP package. The existing code in tensorflow/python/keras is a
         staled copy and will be removed in future release (2.7). Please remove
@@ -10252,7 +10260,7 @@ answered questions, and were part of inspiring discussions.
 ## Major Features And Improvements
 
 *   `tf.keras` is now part of the core TensorFlow API.
-*   [`tf.data`](http://tensorflow.org/guide/data) is now part of the core
+*   [`tf.data`](https://tensorflow.org/guide/data) is now part of the core
     TensorFlow API.
     *   The API is now subject to backwards compatibility guarantees.
     *   For a guide to migrating from the `tf.contrib.data` API, see the

@@ -6,6 +6,7 @@ load(
     "tf_features_nolayering_check_if_ios",
 )
 load("//tensorflow:tensorflow.default.bzl", "pybind_extension")
+load("//tensorflow/core/platform:build_config_root.bzl", "if_pywrap")
 load(
     "//tensorflow/lite:build_def.bzl",
     "tflite_custom_android_library",
@@ -130,7 +131,7 @@ py_strict_library(
     ],
     deps = [
         ":zip_test_utils",
-        "//tensorflow:tensorflow_py",
+        "//tensorflow/lite/python:lite",
         "//tensorflow/lite/python:test_util",
         "//tensorflow/python/platform:resource_loader",
         "//tensorflow/python/saved_model:signature_constants",
@@ -149,6 +150,7 @@ py_strict_library(
         # "//third_party/py/tensorflow_addons",
         # copybara:uncomment_end
         "//tensorflow/python/framework:test_lib",
+        "//tensorflow/lite/python:lite",
         "//tensorflow/python/ops:array_ops",
         "//tensorflow/python/ops:list_ops",
         "//tensorflow/python/ops:rnn",
@@ -169,15 +171,22 @@ py_strict_library(
     name = "zip_test_utils",
     srcs = ["zip_test_utils.py"],
     deps = [
-        ":_pywrap_string_util",
         ":generate_examples_report",
         "//tensorflow:tensorflow_py",
+        "//tensorflow/lite/python:lite",
         "//tensorflow/lite/tools:flatbuffer_utils",
         "//tensorflow/python/framework:convert_to_constants",
         "//tensorflow/python/saved_model:signature_constants",
         "//third_party/py/numpy",
         "@ml_dtypes_py//ml_dtypes",
-    ],
+    ] + if_pywrap(
+        if_false = [
+            ":_pywrap_string_util",
+        ],
+        if_true = [
+            "//tensorflow/lite/python:pywrap_tflite",
+        ],
+    ),
 )
 
 py_strict_binary(
@@ -637,8 +646,8 @@ cc_library(
         "//tensorflow/lite:string_util",
         "//tensorflow/lite/python/interpreter_wrapper:numpy",
         "//tensorflow/lite/python/interpreter_wrapper:python_utils",
-        "//third_party/python_runtime:headers",
         "@com_google_absl//absl/strings",
+        "@local_xla//third_party/python_runtime:headers",
     ],
 )
 
@@ -696,6 +705,9 @@ pybind_extension(
     additional_stubgen_deps = [
         "//third_party/py/numpy:numpy",
     ],
+    common_lib_packages = [
+        "third_party/tensorflow/lite/python",
+    ],
     enable_stub_generation = True,
     features = ["-use_header_modules"],
     pytype_srcs = [
@@ -705,7 +717,7 @@ pybind_extension(
         ":string_util_lib",
         "//tensorflow/lite/python/interpreter_wrapper:numpy",
         "//tensorflow/python/lib/core:pybind11_lib",
-        "//third_party/python_runtime:headers",
+        "@local_xla//third_party/python_runtime:headers",
         "@pybind11",
     ],
 )

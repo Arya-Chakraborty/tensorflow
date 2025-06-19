@@ -65,6 +65,7 @@ cc_library(
     deps = [
         ":util",
         "//tensorflow/lite:string_util",
+        "//tensorflow/lite/c:c_api_types",
         "//tensorflow/lite/core/c:common",
         "//tensorflow/lite/experimental/resource",
     ] + if_mobile([
@@ -166,6 +167,7 @@ cc_library(
         ":delegate_data",
         ":tflite_subgraph_execute",
         ":util",
+        "//tensorflow/core:session_options",
         "//tensorflow/core/tfrt/fallback:op_kernel_runner",
         "//tensorflow/lite:kernel_api",
         "//tensorflow/lite:macros",
@@ -173,10 +175,14 @@ cc_library(
         "//tensorflow/lite:string",
         "//tensorflow/lite:string_util",
         "//tensorflow/lite:util",
+        "//tensorflow/lite/core:subgraph",
         "//tensorflow/lite/core/api",
         "//tensorflow/lite/core/c:common",
         "//tensorflow/lite/delegates/utils:simple_delegate",
         "//tensorflow/lite/kernels:kernel_util",
+        "@com_google_absl//absl/container:inlined_vector",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@flatbuffers",
     ] + if_mobile([
@@ -394,6 +400,7 @@ cc_library(
         "//tensorflow/core:portable_gif_internal",
         "//tensorflow/core:portable_jpeg_internal",
         "//tensorflow/core/lib/png:png_io",
+        "//tensorflow/core/lib/webp:webp_io",
     ],
 )
 
